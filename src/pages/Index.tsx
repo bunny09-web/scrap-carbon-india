@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { 
   Leaf, 
   Recycle, 
@@ -18,26 +19,27 @@ import {
   CheckCircle,
   LogOut
 } from 'lucide-react';
-import Dashboard from './Dashboard';
-import CarbonTracker from './CarbonTracker';
-import ScrapMarketplace from './ScrapMarketplace';
 import AuthPage from '@/components/auth/AuthPage';
 
 const Index = () => {
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // If user is logged in, show protected content
+  // If user is logged in and tries to access protected routes via tabs
   if (user && activeTab === 'dashboard') {
-    return <Dashboard />;
+    navigate('/dashboard');
+    return null;
   }
 
   if (user && activeTab === 'carbon-tracker') {
-    return <CarbonTracker />;
+    navigate('/carbon-tracker');
+    return null;
   }
 
   if (user && activeTab === 'marketplace') {
-    return <ScrapMarketplace />;
+    navigate('/marketplace');
+    return null;
   }
 
   const stats = [
@@ -90,13 +92,9 @@ const Index = () => {
 
   const handleDashboardClick = () => {
     if (user) {
-      setActiveTab('dashboard');
+      navigate('/dashboard');
     } else {
-      // Scroll to auth section or show modal
-      const authSection = document.getElementById('auth-section');
-      if (authSection) {
-        authSection.scrollIntoView({ behavior: 'smooth' });
-      }
+      setActiveTab('auth');
     }
   };
 
@@ -132,22 +130,22 @@ const Index = () => {
                       Overview
                     </Button>
                     <Button
-                      variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-                      onClick={() => setActiveTab('dashboard')}
+                      variant="ghost"
+                      onClick={() => navigate('/dashboard')}
                       className="text-sm"
                     >
                       Dashboard
                     </Button>
                     <Button
-                      variant={activeTab === 'marketplace' ? 'default' : 'ghost'}
-                      onClick={() => setActiveTab('marketplace')}
+                      variant="ghost"
+                      onClick={() => navigate('/marketplace')}
                       className="text-sm"
                     >
                       Marketplace
                     </Button>
                     <Button
-                      variant={activeTab === 'carbon-tracker' ? 'default' : 'ghost'}
-                      onClick={() => setActiveTab('carbon-tracker')}
+                      variant="ghost"
+                      onClick={() => navigate('/carbon-tracker')}
                       className="text-sm"
                     >
                       Carbon Tracker

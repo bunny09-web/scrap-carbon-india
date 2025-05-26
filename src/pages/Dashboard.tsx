@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
 import ScrapTransactionForm from '@/components/scrap/ScrapTransactionForm';
+import TransactionHistory from '@/components/scrap/TransactionHistory';
 import CarbonCalculator from '@/components/carbon/CarbonCalculator';
 import EPRReportingDashboard from '@/components/epr/EPRReportingDashboard';
+import UserProfile from '@/components/profile/UserProfile';
 import { Recycle, LogOut, User, Building, Factory } from 'lucide-react';
 
 const Dashboard = () => {
@@ -29,6 +31,20 @@ const Dashboard = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Create tabs list based on user role
+  const tabs = [
+    { id: 'transactions', label: 'Transactions', component: ScrapTransactionForm },
+    { id: 'history', label: 'History', component: TransactionHistory },
+    { id: 'carbon', label: 'Carbon Credits', component: CarbonCalculator },
+  ];
+
+  // Add EPR tab only for corporate users
+  if (profile?.role === 'corporate') {
+    tabs.push({ id: 'epr', label: 'EPR Reports', component: EPRReportingDashboard });
+  }
+
+  tabs.push({ id: 'profile', label: 'Profile', component: UserProfile });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
@@ -64,21 +80,26 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="transactions" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="carbon">Carbon Credits</TabsTrigger>
-            {profile?.role === 'corporate' && (
-              <TabsTrigger value="epr">EPR Reports</TabsTrigger>
-            )}
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsList className={`grid w-full ${profile?.role === 'corporate' ? 'grid-cols-5' : 'grid-cols-4'} mb-8`}>
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="transactions" className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">Scrap Transactions</h2>
-              <p className="text-gray-600">Create and manage your scrap trading activities</p>
+              <h2 className="text-3xl font-bold mb-2">Create Transaction</h2>
+              <p className="text-gray-600">List your scrap for recycling and automatically generate carbon credits</p>
             </div>
             <ScrapTransactionForm />
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Transaction History</h2>
+              <p className="text-gray-600">View and manage your scrap trading activities</p>
+            </div>
+            <TransactionHistory />
           </TabsContent>
 
           <TabsContent value="carbon" className="space-y-6">
@@ -104,48 +125,7 @@ const Dashboard = () => {
               <h2 className="text-3xl font-bold mb-2">User Profile</h2>
               <p className="text-gray-600">Manage your account information and settings</p>
             </div>
-            
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Your account details and verification status</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Full Name</label>
-                    <p className="text-lg">{profile?.full_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Role</label>
-                    <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(profile?.role || 'kabadiwala')}`}>
-                      {getRoleIcon(profile?.role || 'kabadiwala')}
-                      <span className="capitalize">{profile?.role}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Phone</label>
-                    <p className="text-lg">{profile?.phone || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">KYC Status</label>
-                    <p className={`text-lg ${profile?.kyc_verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {profile?.kyc_verified ? 'Verified' : 'Pending'}
-                    </p>
-                  </div>
-                  {profile?.business_name && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Business Name</label>
-                      <p className="text-lg">{profile.business_name}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Address</label>
-                    <p className="text-lg">{profile?.address || 'Not provided'}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <UserProfile />
           </TabsContent>
         </Tabs>
       </main>
