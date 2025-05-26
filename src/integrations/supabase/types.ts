@@ -9,7 +9,215 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      carbon_credits: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          credits_generated: number
+          emission_factor: number
+          id: string
+          market_price: number | null
+          methodology: string
+          status: Database["public"]["Enums"]["credit_status"] | null
+          transaction_id: string
+          updated_at: string
+          verification_date: string | null
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          credits_generated: number
+          emission_factor: number
+          id?: string
+          market_price?: number | null
+          methodology?: string
+          status?: Database["public"]["Enums"]["credit_status"] | null
+          transaction_id: string
+          updated_at?: string
+          verification_date?: string | null
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          credits_generated?: number
+          emission_factor?: number
+          id?: string
+          market_price?: number | null
+          methodology?: string
+          status?: Database["public"]["Enums"]["credit_status"] | null
+          transaction_id?: string
+          updated_at?: string
+          verification_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carbon_credits_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carbon_credits_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "scrap_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epr_reports: {
+        Row: {
+          company_id: string
+          compliance_status: string | null
+          created_at: string
+          filed_date: string | null
+          id: string
+          reporting_period: string
+          total_credits_generated: number
+          total_scrap_processed: number
+        }
+        Insert: {
+          company_id: string
+          compliance_status?: string | null
+          created_at?: string
+          filed_date?: string | null
+          id?: string
+          reporting_period: string
+          total_credits_generated: number
+          total_scrap_processed: number
+        }
+        Update: {
+          company_id?: string
+          compliance_status?: string | null
+          created_at?: string
+          filed_date?: string | null
+          id?: string
+          reporting_period?: string
+          total_credits_generated?: number
+          total_scrap_processed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epr_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          aadhaar_number: string | null
+          address: string | null
+          business_name: string | null
+          created_at: string
+          full_name: string
+          gst_number: string | null
+          id: string
+          kyc_verified: boolean | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          aadhaar_number?: string | null
+          address?: string | null
+          business_name?: string | null
+          created_at?: string
+          full_name: string
+          gst_number?: string | null
+          id?: string
+          kyc_verified?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          aadhaar_number?: string | null
+          address?: string | null
+          business_name?: string | null
+          created_at?: string
+          full_name?: string
+          gst_number?: string | null
+          id?: string
+          kyc_verified?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scrap_transactions: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          images: string[] | null
+          location: string | null
+          notes: string | null
+          price_per_kg: number
+          scrap_type: Database["public"]["Enums"]["scrap_type"]
+          seller_id: string
+          status: Database["public"]["Enums"]["transaction_status"] | null
+          total_amount: number
+          updated_at: string
+          weight_kg: number
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          notes?: string | null
+          price_per_kg: number
+          scrap_type: Database["public"]["Enums"]["scrap_type"]
+          seller_id: string
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          total_amount: number
+          updated_at?: string
+          weight_kg: number
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          notes?: string | null
+          price_per_kg?: number
+          scrap_type?: Database["public"]["Enums"]["scrap_type"]
+          seller_id?: string
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          total_amount?: number
+          updated_at?: string
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrap_transactions_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scrap_transactions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +226,22 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      credit_status: "calculated" | "verified" | "minted" | "traded"
+      scrap_type:
+        | "aluminum"
+        | "steel"
+        | "pet_plastic"
+        | "copper"
+        | "paper"
+        | "glass"
+        | "e_waste"
+        | "cardboard"
+        | "brass"
+        | "iron"
+        | "mixed_plastic"
+        | "textile"
+      transaction_status: "pending" | "verified" | "completed" | "cancelled"
+      user_role: "kabadiwala" | "recycler" | "corporate" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +356,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      credit_status: ["calculated", "verified", "minted", "traded"],
+      scrap_type: [
+        "aluminum",
+        "steel",
+        "pet_plastic",
+        "copper",
+        "paper",
+        "glass",
+        "e_waste",
+        "cardboard",
+        "brass",
+        "iron",
+        "mixed_plastic",
+        "textile",
+      ],
+      transaction_status: ["pending", "verified", "completed", "cancelled"],
+      user_role: ["kabadiwala", "recycler", "corporate", "admin"],
+    },
   },
 } as const
