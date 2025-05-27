@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +9,17 @@ import TransactionHistory from '@/components/scrap/TransactionHistory';
 import CarbonCalculator from '@/components/carbon/CarbonCalculator';
 import EPRReportingDashboard from '@/components/epr/EPRReportingDashboard';
 import UserProfile from '@/components/profile/UserProfile';
-import { Recycle, ArrowLeft, User, Building, Factory, TrendingUp, Package, Leaf, DollarSign } from 'lucide-react';
+import DataVisualization from '@/components/analytics/DataVisualization';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { Recycle, ArrowLeft, User, Building, Factory, TrendingUp, Package, Leaf, DollarSign, BarChart3, Bell, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, loading } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
 
   if (loading) {
@@ -46,17 +51,33 @@ const Dashboard = () => {
     }
   };
 
+  const handleExportData = () => {
+    toast({
+      title: "Export Started",
+      description: "Your data export is being prepared and will be downloaded shortly.",
+    });
+    // Simulate export process
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: "Your transaction data has been downloaded successfully.",
+      });
+    }, 2000);
+  };
+
   // Create tabs list based on user role
   const tabs = [
     { id: 'overview', label: 'Overview' },
+    { id: 'analytics', label: 'Analytics' },
     { id: 'transactions', label: 'Transactions' },
     { id: 'history', label: 'History' },
     { id: 'carbon', label: 'Carbon Credits' },
+    { id: 'notifications', label: 'Notifications' },
   ];
 
   // Add EPR tab only for corporate users
   if (profile?.role === 'corporate') {
-    tabs.push({ id: 'epr', label: 'EPR Reports' });
+    tabs.splice(-1, 0, { id: 'epr', label: 'EPR Reports' });
   }
 
   tabs.push({ id: 'profile', label: 'Profile' });
@@ -73,8 +94,8 @@ const Dashboard = () => {
     },
     {
       title: "Carbon Credits",
-      value: "1.2 tCO2e",
-      change: "+8%",
+      value: "6.7 tCO2e",
+      change: "+13%",
       icon: Leaf,
       color: "text-green-600",
       bgColor: "bg-green-50"
@@ -97,6 +118,33 @@ const Dashboard = () => {
     }
   ];
 
+  const recentActivity = [
+    {
+      id: 1,
+      type: 'transaction',
+      title: 'Aluminum Scrap Sold',
+      description: '50kg sold to Mumbai Recyclers',
+      time: '2 hours ago',
+      amount: '₹6,000'
+    },
+    {
+      id: 2,
+      type: 'carbon',
+      title: 'Carbon Credits Earned',
+      description: '0.125 tCO2e from recent transaction',
+      time: '2 hours ago',
+      amount: '+0.125 tCO2e'
+    },
+    {
+      id: 3,
+      type: 'price',
+      title: 'Price Alert',
+      description: 'Copper prices increased by 5.2%',
+      time: '4 hours ago',
+      amount: '₹600/kg'
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       {/* Header */}
@@ -116,6 +164,10 @@ const Dashboard = () => {
               </span>
             </div>
             <div className="flex items-center space-x-4">
+              <Button variant="outline" size="sm" onClick={handleExportData}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
               <div className="text-sm text-gray-600">
                 Welcome, <span className="font-medium">{profile?.full_name}</span>
               </div>
@@ -131,7 +183,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full ${profile?.role === 'corporate' ? 'grid-cols-6' : 'grid-cols-5'} mb-8`}>
+          <TabsList className={`grid w-full ${profile?.role === 'corporate' ? 'grid-cols-8' : 'grid-cols-7'} mb-8`}>
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
             ))}
@@ -163,43 +215,79 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Common tasks to get started</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button 
-                    className="bg-gradient-to-r from-green-600 to-blue-600 h-20 text-left flex-col items-start"
-                    onClick={() => setActiveTab('transactions')}
-                  >
-                    <Package className="h-6 w-6 mb-2" />
-                    <span className="font-medium">Create Transaction</span>
-                    <span className="text-xs opacity-90">List new scrap for recycling</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-20 text-left flex-col items-start"
-                    onClick={() => setActiveTab('carbon')}
-                  >
-                    <Leaf className="h-6 w-6 mb-2" />
-                    <span className="font-medium">View Carbon Credits</span>
-                    <span className="text-xs opacity-70">Check your environmental impact</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-20 text-left flex-col items-start"
-                    onClick={() => navigate('/marketplace')}
-                  >
-                    <TrendingUp className="h-6 w-6 mb-2" />
-                    <span className="font-medium">Browse Marketplace</span>
-                    <span className="text-xs opacity-70">Find buyers and sellers</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Activity Feed and Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Activity */}
+              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Your latest transactions and updates</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentActivity.map((activity) => (
+                      <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100">
+                        <div className="bg-gradient-to-r from-green-600 to-blue-600 p-2 rounded-lg">
+                          <Package className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{activity.title}</div>
+                          <div className="text-sm text-gray-600">{activity.description}</div>
+                          <div className="text-xs text-gray-500">{activity.time}</div>
+                        </div>
+                        <div className="font-semibold text-green-600">{activity.amount}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Common tasks to get started</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Button 
+                      className="bg-gradient-to-r from-green-600 to-blue-600 h-20 text-left flex-col items-start"
+                      onClick={() => setActiveTab('transactions')}
+                    >
+                      <Package className="h-6 w-6 mb-2" />
+                      <span className="font-medium">Create Transaction</span>
+                      <span className="text-xs opacity-90">List new scrap for recycling</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-20 text-left flex-col items-start"
+                      onClick={() => setActiveTab('carbon')}
+                    >
+                      <Leaf className="h-6 w-6 mb-2" />
+                      <span className="font-medium">View Carbon Credits</span>
+                      <span className="text-xs opacity-70">Check your environmental impact</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-20 text-left flex-col items-start"
+                      onClick={() => navigate('/marketplace')}
+                    >
+                      <TrendingUp className="h-6 w-6 mb-2" />
+                      <span className="font-medium">Browse Marketplace</span>
+                      <span className="text-xs opacity-70">Find buyers and sellers</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Analytics Dashboard</h2>
+              <p className="text-gray-600">Comprehensive insights into your trading performance</p>
+            </div>
+            <DataVisualization />
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-6">
@@ -224,6 +312,14 @@ const Dashboard = () => {
               <p className="text-gray-600">Track your automatically generated carbon credits</p>
             </div>
             <CarbonCalculator />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Notification Center</h2>
+              <p className="text-gray-600">Stay updated with your transactions and market insights</p>
+            </div>
+            <NotificationCenter />
           </TabsContent>
 
           {profile?.role === 'corporate' && (
