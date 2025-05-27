@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (loading) {
     return (
@@ -130,7 +130,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className={`grid w-full ${profile?.role === 'corporate' ? 'grid-cols-6' : 'grid-cols-5'} mb-8`}>
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
@@ -173,7 +173,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button 
                     className="bg-gradient-to-r from-green-600 to-blue-600 h-20 text-left flex-col items-start"
-                    onClick={() => document.querySelector('[value="transactions"]')?.click()}
+                    onClick={() => setActiveTab('transactions')}
                   >
                     <Package className="h-6 w-6 mb-2" />
                     <span className="font-medium">Create Transaction</span>
@@ -182,7 +182,7 @@ const Dashboard = () => {
                   <Button 
                     variant="outline" 
                     className="h-20 text-left flex-col items-start"
-                    onClick={() => document.querySelector('[value="carbon"]')?.click()}
+                    onClick={() => setActiveTab('carbon')}
                   >
                     <Leaf className="h-6 w-6 mb-2" />
                     <span className="font-medium">View Carbon Credits</span>
