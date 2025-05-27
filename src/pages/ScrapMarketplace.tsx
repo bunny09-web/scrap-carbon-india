@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Filter, MapPin, Package, ShoppingCart, ArrowLeft, Phone, Star, Verified } from 'lucide-react';
+import { Search, Filter, MapPin, Package, ShoppingCart, ArrowLeft, User, Phone, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MarketplaceListing {
   id: string;
@@ -22,17 +23,17 @@ interface MarketplaceListing {
   seller_name: string;
   seller_phone: string;
   seller_rating: number;
-  seller_verified: boolean;
+  verified: boolean;
 }
 
 const ScrapMarketplace = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { profile, loading } = useAuth();
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [listingsLoading, setListingsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
 
   const scrapTypes = [
     { value: 'all', label: 'All Types' },
@@ -50,17 +51,7 @@ const ScrapMarketplace = () => {
     { value: 'textile', label: 'Textile' }
   ];
 
-  const locations = [
-    { value: 'all', label: 'All Locations' },
-    { value: 'mumbai', label: 'Mumbai' },
-    { value: 'delhi', label: 'Delhi' },
-    { value: 'bangalore', label: 'Bangalore' },
-    { value: 'chennai', label: 'Chennai' },
-    { value: 'pune', label: 'Pune' },
-    { value: 'hyderabad', label: 'Hyderabad' }
-  ];
-
-  // Enhanced mock data for MVP
+  // Mock data for MVP testing
   const mockListings: MarketplaceListing[] = [
     {
       id: '1',
@@ -69,13 +60,13 @@ const ScrapMarketplace = () => {
       price_per_kg: 110,
       total_amount: 2750,
       location: 'Mumbai, Maharashtra',
-      notes: 'High-grade aluminum sheets and cans, sorted and cleaned',
+      notes: 'High-grade aluminum sheets and cans',
       created_at: new Date().toISOString(),
       seller_id: 'seller-1',
       seller_name: 'Rajesh Kumar',
       seller_phone: '+91 9876543210',
       seller_rating: 4.8,
-      seller_verified: true
+      verified: true
     },
     {
       id: '2',
@@ -84,13 +75,13 @@ const ScrapMarketplace = () => {
       price_per_kg: 32,
       total_amount: 4800,
       location: 'Delhi, India',
-      notes: 'Mixed steel scrap from construction site, ready for pickup',
+      notes: 'Mixed steel scrap from construction',
       created_at: new Date(Date.now() - 3600000).toISOString(),
       seller_id: 'seller-2',
       seller_name: 'Priya Sharma',
       seller_phone: '+91 9123456789',
-      seller_rating: 4.6,
-      seller_verified: true
+      seller_rating: 4.5,
+      verified: true
     },
     {
       id: '3',
@@ -99,13 +90,13 @@ const ScrapMarketplace = () => {
       price_per_kg: 22,
       total_amount: 880,
       location: 'Bangalore, Karnataka',
-      notes: 'Clean PET bottles, sorted and compressed for easy transport',
+      notes: 'Clean PET bottles, sorted and compressed',
       created_at: new Date(Date.now() - 7200000).toISOString(),
       seller_id: 'seller-3',
       seller_name: 'Ahmed Khan',
       seller_phone: '+91 9876123456',
       seller_rating: 4.9,
-      seller_verified: false
+      verified: true
     },
     {
       id: '4',
@@ -114,13 +105,13 @@ const ScrapMarketplace = () => {
       price_per_kg: 450,
       total_amount: 4500,
       location: 'Chennai, Tamil Nadu',
-      notes: 'Pure copper wires and tubes, excellent quality',
+      notes: 'Pure copper wires and tubes',
       created_at: new Date(Date.now() - 10800000).toISOString(),
       seller_id: 'seller-4',
       seller_name: 'Sunita Reddy',
       seller_phone: '+91 9234567890',
       seller_rating: 4.7,
-      seller_verified: true
+      verified: false
     },
     {
       id: '5',
@@ -134,32 +125,43 @@ const ScrapMarketplace = () => {
       seller_id: 'seller-5',
       seller_name: 'Vikram Singh',
       seller_phone: '+91 9345678901',
-      seller_rating: 4.4,
-      seller_verified: false
+      seller_rating: 4.6,
+      verified: true
     }
   ];
 
   useEffect(() => {
-    setLoading(true);
+    // Simulate loading
+    setListingsLoading(true);
     setTimeout(() => {
       setListings(mockListings);
-      setLoading(false);
+      setListingsLoading(false);
     }, 1000);
   }, []);
 
-  const handleShowInterest = async (listing: MarketplaceListing) => {
-    toast({
-      title: "Interest Registered Successfully!",
-      description: `Contact ${listing.seller_name} at ${listing.seller_phone} to proceed with the purchase.`,
-    });
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleShowInterest = async (listingId: string) => {
+    const listing = listings.find(l => l.id === listingId);
+    if (listing) {
+      toast({
+        title: "Interest Registered",
+        description: `Contact ${listing.seller_name} at ${listing.seller_phone} to proceed.`,
+      });
+    }
   };
 
   const formatScrapType = (type: string) => {
     return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const getLocationFromString = (locationString: string) => {
-    return locationString.split(',')[0].toLowerCase();
   };
 
   const filteredListings = listings.filter(listing => {
@@ -167,34 +169,30 @@ const ScrapMarketplace = () => {
                          listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          listing.seller_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || listing.scrap_type === selectedType;
-    const matchesLocation = selectedLocation === 'all' || getLocationFromString(listing.location) === selectedLocation;
-    return matchesSearch && matchesType && matchesLocation;
+    return matchesSearch && matchesType;
   });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-green-200 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-green-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" onClick={() => navigate('/')} className="hover:bg-green-50">
+              <Button variant="ghost" onClick={() => navigate('/')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
+                Back
               </Button>
               <div className="bg-gradient-to-r from-green-600 to-blue-600 p-2 rounded-lg">
                 <ShoppingCart className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                  Scrap Marketplace
-                </h1>
-                <p className="text-sm text-gray-600">Find the best scrap deals near you</p>
-              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                Scrap Marketplace
+              </span>
             </div>
-            <Badge className="bg-green-100 text-green-800">
-              {filteredListings.length} listings available
-            </Badge>
+            <div className="text-sm text-gray-600">
+              Welcome, <span className="font-medium">{profile?.full_name}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -202,63 +200,44 @@ const ScrapMarketplace = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filter */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by type, location, or seller..."
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scrapTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger>
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location.value} value={location.value}>
-                      {location.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedType('all');
-                  setSelectedLocation('all');
-                }}
-              >
-                Clear Filters
-              </Button>
+        <div className="mb-8 space-y-4">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Scrap Marketplace
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Connect with verified buyers and sellers across India
+            </p>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by scrap type, location, or seller..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-          </CardContent>
-        </Card>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full md:w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                {scrapTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {/* Listings */}
-        {loading ? (
+        {listingsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -277,84 +256,78 @@ const ScrapMarketplace = () => {
             <CardContent className="p-12 text-center">
               <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-xl font-semibold mb-2">No listings found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search filters or check back later for new listings.
-              </p>
-              <Button onClick={() => navigate('/dashboard')} className="bg-gradient-to-r from-green-600 to-blue-600">
-                Create Your First Listing
-              </Button>
+              <p className="text-gray-600">Try adjusting your search criteria</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredListings.map((listing) => (
-              <Card key={listing.id} className="hover:shadow-lg transition-shadow duration-200">
+              <Card key={listing.id} className="border-0 shadow-lg bg-white/70 backdrop-blur-sm hover:shadow-xl transition-shadow">
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg text-green-600">
+                      <CardTitle className="text-lg capitalize">
                         {formatScrapType(listing.scrap_type)}
                       </CardTitle>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <MapPin className="h-4 w-4 text-gray-400" />
+                      <div className="flex items-center space-x-2 mt-2">
+                        <MapPin className="h-4 w-4 text-gray-500" />
                         <span className="text-sm text-gray-600">{listing.location}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-600">
-                        ₹{listing.total_amount.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        ₹{listing.price_per_kg}/kg
-                      </div>
-                    </div>
+                    {listing.verified && (
+                      <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                    )}
                   </div>
                 </CardHeader>
-                
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Weight:</span>
-                    <span className="font-medium">{listing.weight_kg} kg</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Weight</p>
+                      <p className="text-lg font-semibold">{listing.weight_kg} kg</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Price per kg</p>
+                      <p className="text-lg font-semibold">₹{listing.price_per_kg}</p>
+                    </div>
                   </div>
                   
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600">Total Amount</p>
+                    <p className="text-2xl font-bold text-green-600">₹{listing.total_amount}</p>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium">{listing.seller_name}</p>
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                            <span className="text-xs text-gray-600">{listing.seller_rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 text-gray-500">
+                        <Phone className="h-4 w-4" />
+                        <span className="text-xs">{listing.seller_phone}</span>
+                      </div>
+                    </div>
+                  </div>
+
                   {listing.notes && (
-                    <div>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
-                        {listing.notes}
-                      </p>
+                    <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      <p className="font-medium">Notes:</p>
+                      <p>{listing.notes}</p>
                     </div>
                   )}
-                  
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-700">{listing.seller_name}</span>
-                        {listing.seller_verified && (
-                          <Verified className="h-4 w-4 text-blue-500" />
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{listing.seller_rating}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        onClick={() => handleShowInterest(listing)}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                      >
-                        Show Interest
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 mt-2 text-center">
-                      Listed {new Date(listing.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
+
+                  <Button 
+                    onClick={() => handleShowInterest(listing.id)}
+                    className="w-full bg-gradient-to-r from-green-600 to-blue-600"
+                  >
+                    Show Interest
+                  </Button>
                 </CardContent>
               </Card>
             ))}
