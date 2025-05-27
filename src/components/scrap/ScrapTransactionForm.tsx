@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { Calculator, Package, MapPin } from 'lucide-react';
+import { Calculator, Package, MapPin, Loader2 } from 'lucide-react';
 
 const scrapTypes = [
   { value: 'aluminum', label: 'Aluminum', price: 120 },
@@ -39,10 +39,50 @@ const ScrapTransactionForm = () => {
     notes: ''
   });
 
+  const [errors, setErrors] = useState({
+    scrap_type: '',
+    weight_kg: '',
+    price_per_kg: '',
+    location: ''
+  });
+
   const selectedScrap = scrapTypes.find(s => s.value === formData.scrap_type);
   const totalAmount = formData.weight_kg && formData.price_per_kg 
     ? parseFloat(formData.weight_kg) * parseFloat(formData.price_per_kg)
     : 0;
+
+  const validateForm = () => {
+    const newErrors = {
+      scrap_type: '',
+      weight_kg: '',
+      price_per_kg: '',
+      location: ''
+    };
+    let isValid = true;
+
+    if (!formData.scrap_type) {
+      newErrors.scrap_type = 'Please select a scrap type';
+      isValid = false;
+    }
+
+    if (!formData.weight_kg || parseFloat(formData.weight_kg) <= 0) {
+      newErrors.weight_kg = 'Please enter a valid weight';
+      isValid = false;
+    }
+
+    if (!formData.price_per_kg || parseFloat(formData.price_per_kg) <= 0) {
+      newErrors.price_per_kg = 'Please enter a valid price';
+      isValid = false;
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = 'Please enter a location';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleScrapTypeChange = (value: string) => {
     const scrap = scrapTypes.find(s => s.value === value);
@@ -51,11 +91,31 @@ const ScrapTransactionForm = () => {
       scrap_type: value,
       price_per_kg: scrap ? scrap.price.toString() : ''
     });
+    // Clear scrap type error when user selects
+    if (errors.scrap_type) {
+      setErrors({ ...errors, scrap_type: '' });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!profile) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create transactions",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     try {
@@ -67,13 +127,16 @@ const ScrapTransactionForm = () => {
           weight_kg: parseFloat(formData.weight_kg),
           price_per_kg: parseFloat(formData.price_per_kg),
           total_amount: totalAmount,
-          location: formData.location,
-          notes: formData.notes
+          location: formData.location.trim(),
+          notes: formData.notes.trim() || null
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Transaction creation error:', error);
+        throw new Error(error.message);
+      }
 
       toast({
         title: "Transaction Created!",
@@ -88,10 +151,17 @@ const ScrapTransactionForm = () => {
         location: '',
         notes: ''
       });
+      setErrors({
+        scrap_type: '',
+        weight_kg: '',
+        price_per_kg: '',
+        location: ''
+      });
     } catch (error: any) {
+      console.error('Transaction creation failed:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create transaction",
         variant: "destructive"
       });
     } finally {
@@ -115,7 +185,7 @@ const ScrapTransactionForm = () => {
           <div className="space-y-2">
             <Label htmlFor="scrap_type">Scrap Type</Label>
             <Select value={formData.scrap_type} onValueChange={handleScrapTypeChange}>
-              <SelectTrigger>
+              <SelectTrigger className={errors.scrap_type ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select scrap type" />
               </SelectTrigger>
               <SelectContent>
@@ -129,6 +199,7 @@ const ScrapTransactionForm = () => {
                 ))}
               </SelectContent>
             </Select>
+            {errors.scrap_type && <p className="text-sm text-red-500">{errors.scrap_type}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -138,11 +209,17 @@ const ScrapTransactionForm = () => {
                 id="weight_kg"
                 type="number"
                 step="0.01"
+                min="0.01"
                 placeholder="Enter weight"
                 value={formData.weight_kg}
-                onChange={(e) => setFormData({...formData, weight_kg: e.target.value})}
-                required
+                onChange={(e) => {
+                  setFormData({...formData, weight_kg: e.target.value});
+                  if (errors.weight_kg) setErrors({...errors, weight_kg: ''});
+                }}
+                className={errors.weight_kg ? 'border-red-500' : ''}
+                disabled={loading}
               />
+              {errors.weight_kg && <p className="text-sm text-red-500">{errors.weight_kg}</p>}
             </div>
 
             <div className="space-y-2">
@@ -151,11 +228,17 @@ const ScrapTransactionForm = () => {
                 id="price_per_kg"
                 type="number"
                 step="0.01"
+                min="0.01"
                 placeholder="Price per kg"
                 value={formData.price_per_kg}
-                onChange={(e) => setFormData({...formData, price_per_kg: e.target.value})}
-                required
+                onChange={(e) => {
+                  setFormData({...formData, price_per_kg: e.target.value});
+                  if (errors.price_per_kg) setErrors({...errors, price_per_kg: ''});
+                }}
+                className={errors.price_per_kg ? 'border-red-500' : ''}
+                disabled={loading}
               />
+              {errors.price_per_kg && <p className="text-sm text-red-500">{errors.price_per_kg}</p>}
             </div>
           </div>
 
@@ -186,11 +269,16 @@ const ScrapTransactionForm = () => {
               <Input
                 id="location"
                 placeholder="Enter pickup location"
-                className="pl-9"
+                className={`pl-9 ${errors.location ? 'border-red-500' : ''}`}
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={(e) => {
+                  setFormData({...formData, location: e.target.value});
+                  if (errors.location) setErrors({...errors, location: ''});
+                }}
+                disabled={loading}
               />
             </div>
+            {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
           </div>
 
           <div className="space-y-2">
@@ -200,6 +288,7 @@ const ScrapTransactionForm = () => {
               placeholder="Any additional information about the scrap..."
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              disabled={loading}
             />
           </div>
 
@@ -208,7 +297,14 @@ const ScrapTransactionForm = () => {
             className="w-full bg-gradient-to-r from-green-600 to-blue-600"
             disabled={loading}
           >
-            {loading ? 'Creating Transaction...' : 'Create Transaction'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Transaction...
+              </>
+            ) : (
+              'Create Transaction'
+            )}
           </Button>
         </form>
       </CardContent>

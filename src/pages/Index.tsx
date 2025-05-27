@@ -17,14 +17,17 @@ import {
   Target,
   ArrowRight,
   CheckCircle,
-  LogOut
+  LogOut,
+  Play
 } from 'lucide-react';
 import AuthPage from '@/components/auth/AuthPage';
+import DemoModal from '@/components/demo/DemoModal';
 
 const Index = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
 
   // If user is logged in and tries to access protected routes via tabs
   if (user && activeTab === 'dashboard') {
@@ -96,6 +99,10 @@ const Index = () => {
     } else {
       setActiveTab('auth');
     }
+  };
+
+  const handleWatchDemo = () => {
+    setIsDemoModalOpen(true);
   };
 
   return (
@@ -178,6 +185,12 @@ const Index = () => {
         </div>
       </nav>
 
+      {/* Demo Modal */}
+      <DemoModal 
+        isOpen={isDemoModalOpen} 
+        onClose={() => setIsDemoModalOpen(false)} 
+      />
+
       {/* Show auth page if not logged in and auth tab is selected */}
       {!user && activeTab === 'auth' && <AuthPage />}
 
@@ -206,7 +219,12 @@ const Index = () => {
                 >
                   Launch Platform <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-                <Button size="lg" variant="outline">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={handleWatchDemo}
+                >
+                  <Play className="mr-2 h-5 w-5" />
                   Watch Demo
                 </Button>
               </div>
@@ -317,19 +335,19 @@ const Index = () => {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Frontend:</span>
-                        <span className="text-blue-600">Flutter + Dart</span>
+                        <span className="text-blue-600">React + TypeScript</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Backend:</span>
-                        <span className="text-blue-600">Node.js + Hyperledger</span>
+                        <span className="text-blue-600">Supabase + Edge Functions</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Database:</span>
-                        <span className="text-blue-600">MongoDB Atlas</span>
+                        <span className="text-blue-600">PostgreSQL</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Hosting:</span>
-                        <span className="text-blue-600">GitHub + Vercel</span>
+                        <span className="text-blue-600">Lovable + Vercel</span>
                       </div>
                     </div>
                   </CardContent>
@@ -386,8 +404,14 @@ const Index = () => {
                 >
                   Start Building Now
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                  Download Business Plan
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white/10"
+                  onClick={handleWatchDemo}
+                >
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch Demo
                 </Button>
               </div>
             </div>
