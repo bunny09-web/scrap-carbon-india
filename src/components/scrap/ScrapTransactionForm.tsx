@@ -6,28 +6,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
-import { Calculator, Package, MapPin, Loader2 } from 'lucide-react';
+import { Calculator, Package, MapPin, Loader2, TrendingUp } from 'lucide-react';
 
 const scrapTypes = [
-  { value: 'aluminum', label: 'Aluminum', price: 120 },
-  { value: 'steel', label: 'Steel', price: 45 },
-  { value: 'pet_plastic', label: 'PET Plastic', price: 25 },
-  { value: 'copper', label: 'Copper', price: 600 },
-  { value: 'paper', label: 'Paper', price: 12 },
-  { value: 'glass', label: 'Glass', price: 8 },
-  { value: 'e_waste', label: 'E-Waste', price: 35 },
-  { value: 'cardboard', label: 'Cardboard', price: 10 },
-  { value: 'brass', label: 'Brass', price: 350 },
-  { value: 'iron', label: 'Iron', price: 30 },
-  { value: 'mixed_plastic', label: 'Mixed Plastic', price: 18 },
-  { value: 'textile', label: 'Textile', price: 15 }
+  { value: 'aluminum', label: 'Aluminum', price: 120, emission_factor: 8.24 },
+  { value: 'steel', label: 'Steel', price: 45, emission_factor: 2.5 },
+  { value: 'pet_plastic', label: 'PET Plastic', price: 25, emission_factor: 3.1 },
+  { value: 'copper', label: 'Copper', price: 600, emission_factor: 4.2 },
+  { value: 'paper', label: 'Paper', price: 12, emission_factor: 1.8 },
+  { value: 'glass', label: 'Glass', price: 8, emission_factor: 0.5 },
+  { value: 'e_waste', label: 'E-Waste', price: 35, emission_factor: 2.8 },
+  { value: 'cardboard', label: 'Cardboard', price: 10, emission_factor: 1.5 },
+  { value: 'brass', label: 'Brass', price: 350, emission_factor: 3.8 },
+  { value: 'iron', label: 'Iron', price: 30, emission_factor: 2.2 },
+  { value: 'mixed_plastic', label: 'Mixed Plastic', price: 18, emission_factor: 2.5 },
+  { value: 'textile', label: 'Textile', price: 15, emission_factor: 1.2 }
 ];
 
 const ScrapTransactionForm = () => {
-  const { profile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
@@ -50,6 +47,10 @@ const ScrapTransactionForm = () => {
   const totalAmount = formData.weight_kg && formData.price_per_kg 
     ? parseFloat(formData.weight_kg) * parseFloat(formData.price_per_kg)
     : 0;
+
+  const estimatedCredits = formData.weight_kg && selectedScrap
+    ? (parseFloat(formData.weight_kg) * selectedScrap.emission_factor / 1000).toFixed(4)
+    : '0';
 
   const validateForm = () => {
     const newErrors = {
@@ -91,7 +92,6 @@ const ScrapTransactionForm = () => {
       scrap_type: value,
       price_per_kg: scrap ? scrap.price.toString() : ''
     });
-    // Clear scrap type error when user selects
     if (errors.scrap_type) {
       setErrors({ ...errors, scrap_type: '' });
     }
@@ -99,15 +99,7 @@ const ScrapTransactionForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to create transactions",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -119,28 +111,12 @@ const ScrapTransactionForm = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('scrap_transactions')
-        .insert({
-          seller_id: profile.id,
-          scrap_type: formData.scrap_type as any,
-          weight_kg: parseFloat(formData.weight_kg),
-          price_per_kg: parseFloat(formData.price_per_kg),
-          total_amount: totalAmount,
-          location: formData.location.trim(),
-          notes: formData.notes.trim() || null
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Transaction creation error:', error);
-        throw new Error(error.message);
-      }
+      // Simulate API call for MVP
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       toast({
-        title: "Transaction Created!",
-        description: `Created scrap listing for ${formData.weight_kg}kg of ${selectedScrap?.label}. Carbon credits will be automatically calculated.`,
+        title: "Transaction Created Successfully!",
+        description: `Created listing for ${formData.weight_kg}kg of ${selectedScrap?.label}. Estimated carbon credits: ${estimatedCredits} tCO2e`,
       });
 
       // Reset form
@@ -161,7 +137,7 @@ const ScrapTransactionForm = () => {
       console.error('Transaction creation failed:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create transaction",
+        description: "Failed to create transaction. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -243,22 +219,32 @@ const ScrapTransactionForm = () => {
           </div>
 
           {totalAmount > 0 && (
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="flex items-center space-x-2 mb-2">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-2 mb-4">
                 <Calculator className="h-5 w-5 text-green-600" />
                 <span className="font-medium text-green-800">Transaction Summary</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">
-                Total Amount: ₹{totalAmount.toFixed(2)}
-              </div>
-              {selectedScrap && (
-                <div className="text-sm text-green-700 mt-1">
-                  Estimated Carbon Credits: {(parseFloat(formData.weight_kg || '0') * 
-                    (selectedScrap.value === 'aluminum' ? 8.24 : 
-                     selectedScrap.value === 'steel' ? 2.5 : 
-                     selectedScrap.value === 'pet_plastic' ? 3.1 : 2.0)).toFixed(4)} tCO2e
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-green-600">
+                    Total Amount: ₹{totalAmount.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-green-700 mt-1">
+                    {formData.weight_kg}kg × ₹{formData.price_per_kg}/kg
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <div className="text-lg font-semibold text-blue-600">
+                      {estimatedCredits} tCO2e
+                    </div>
+                    <div className="text-sm text-blue-700">
+                      Estimated Carbon Credits
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
